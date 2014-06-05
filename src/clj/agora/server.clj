@@ -11,19 +11,18 @@
    (str "<!DOCTYPE html>"
         "<html>"
         "<head>"
-        "<link rel=\"stylesheet\" href=\"css/page.css\" />"
         "</head>"
         "<body>"
         "<div>"
-        "<p id=\"clickable\">Click me!</p>"
+        "<p><a href='https://github.com/PasDeChocolat/Agora'>Interesting things are afoot.</a></p>"
         "</div>"
-        "<script src=\"js/cljs.js\"></script>"
+        "<script src=\"js/agora.js\"></script>"
         "</body>"
         "</html>")})
 
 (defn handler [request]
   (if (= "/" (:uri request))
-      (response/redirect "/help.html")
+      (response/redirect "/index.html")
       (render-app)))
 
 (def app 

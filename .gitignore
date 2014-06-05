@@ -7,3 +7,6 @@ pom.xml
 .lein-deps-sum
 .lein-repl-history
 .lein-plugins/
+
+.DS_Store
+resources/public/js/agora.js

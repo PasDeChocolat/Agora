@@ -18,3 +18,25 @@ The framework makes use of the following technologies:
 Giving it the following novel properties:
 * [Time travel-like](http://swannodette.github.io/2013/12/31/time-travel/) undo capabilities
 * Effortless query and playback of historical data
+
+
+## Setup
+
+```` bash
+# Start web server:
+lein ring server
+````
+
+````bash
+# Build CLJS:
+lein cljsbuild auto
+````
+
+````bash
+# Package and run:
+lein ring uberjar
+java -jar target/agora-0.1.0-SNAPSHOT-standalone.jar
+````
+
+
+
