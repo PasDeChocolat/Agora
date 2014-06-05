@@ -1,12 +1,16 @@
 pom.xml
+pom.xml.asc
 *jar
 /lib/
 /classes/
 /out/
 /target/
+/checkouts/
 .lein-deps-sum
 .lein-repl-history
 .lein-plugins/
+.lein-failures
 
 .DS_Store
+.nrepl-port
 resources/public/js/agora.js
