@@ -1,7 +1,8 @@
 (ns agora.server
   (:require [ring.adapter.jetty :as jetty]
             [ring.middleware.resource :as resources]
-            [ring.util.response :as response])
+            [ring.util.response :as response]
+            [ring.util.serve :only [serve] :as rus])
   (:gen-class))
 
 (defn render-app []
@@ -32,3 +33,5 @@
 (defn -main [& args]
   (jetty/run-jetty app {:port 3000}))
 
+(defn repl-serve []
+  (rus/serve app))

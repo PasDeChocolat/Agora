@@ -23,12 +23,19 @@ Giving it the following novel properties:
 ## Setup
 
 ```` bash
-# Start web server:
+# Start web server (auto-detect src/clj changes):
 lein ring server
 ````
 
 ````bash
-# Build CLJS:
+# Start web server (from REPL):
+# go to the src/clj agora.server ns and run:
+(repl-serve)
+;; re-eval src/clj files to see changes
+````
+
+````bash
+# Build CLJS (auto-detect src/cljs changes):
 lein cljsbuild auto
 ````
 
