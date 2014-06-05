@@ -1,6 +1,6 @@
 # Unlimited Undo: Space as a Value
 
-Application programming interfaces (APIs) allow software developers to access external resources for their own applications. This project presents a 'physical API' to allow other artists & visitors to change the state of the Kaka‘ako Agora.
+Application programming interfaces (APIs) allow software developers to access external resources for their own applications. This project presents the kernel of a 'physical API' to allow other artists & visitors to change the state of the Kaka‘ako Agora.
 
 ## Kaka‘ako Agora
 
