@@ -11,10 +11,10 @@ Application programming interfaces (APIs) allow software developers to access ex
 This project provides an API for saving and replaying data stored by artists, which represents activity within the Agora. Using this framework allows artists to concentrate on the input and output respresentation of this data, rather than the sometimes complicated work or data input, storage and output.
 
 The framework makes use of the following technologies:
-* Datomic database
-* ClojureScript Om
-* Facebook's React
+* [Datomic](http://www.datomic.com/)
+* [ClojureScript](https://github.com/clojure/clojurescript) - [Om](https://github.com/swannodette/om)
+* [React](http://facebook.github.io/react/)
 
 Giving it the following novel properties:
-* Timetravel-like undo capabilities
+* [Time travel-like](http://swannodette.github.io/2013/12/31/time-travel/) undo capabilities
 * Effortless query and playback of historical data
