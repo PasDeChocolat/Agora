@@ -1,8 +1,6 @@
-(ns cljs-core-async-chat.middleware
-  (:require
-   [ring.util.response]
-   [taoensso.timbre :as timbre
-    :refer (trace debug info warn error fatal spy with-log-level)]))
+(ns agora.middleware
+  (:require [ring.util.response]
+            [taoensso.timbre :as timbre :refer (trace debug info warn error fatal spy with-log-level)]))
 
 (defn wrap-timbre [handler config]
   (fn [request]

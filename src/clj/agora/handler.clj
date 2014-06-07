@@ -1,10 +1,11 @@
 (ns agora.handler
   (:require [compojure.core :refer [GET defroutes routes]]
-            [agora.routes.home :refer [home-routes]]
             [compojure.handler :as compojure-handler]
             [compojure.route :as route]
             [taoensso.timbre :as timbre]
-            [taoensso.timbre.appenders.rotor :as rotor]))
+            [taoensso.timbre.appenders.rotor :as rotor]
+            [agora.routes.home :refer [home-routes]]
+            [agora.middleware :refer [wrap-timbre]]))
 
 (defn init
   "init will be called once when
@@ -26,5 +27,6 @@
   (route/not-found "Not Found"))
 
 (def app
-  (compojure-handler/site
-   (routes home-routes app-routes)))
+  (-> (compojure-handler/site
+       (routes home-routes app-routes))
+      (wrap-timbre {})))
