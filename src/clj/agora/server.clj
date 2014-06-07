@@ -1,8 +1,8 @@
 (ns agora.server
-  (:require [ring.adapter.jetty :as jetty]
-            [ring.middleware.resource :as resources]
-            [ring.util.response :as response]
-            [ring.util.serve :only [serve] :as rus])
+  (:require [org.httpkit.server :as http-kit]
+            [agora.handler :refer [app]]
+            [ring.middleware.reload :as reload]
+            [taoensso.timbre :as timbre])
   (:gen-class))
 
 (defn render-app []
@@ -21,17 +21,15 @@
         "</body>"
         "</html>")})
 
-(defn handler [request]
-  (if (= "/" (:uri request))
-      (response/redirect "/index.html")
-      (render-app)))
+(defn dev? [args] (some #{"-dev"} args))
 
-(def app 
-  (-> handler
-    (resources/wrap-resource "public")))
+(defn port [args]
+  (if-let [port (first (remove #{"-dev"} args))]
+    (Integer/parseInt port)
+    3000))
 
 (defn -main [& args]
-  (jetty/run-jetty app {:port 3000}))
-
-(defn repl-serve []
-  (rus/serve app))
+  (http-kit/run-server
+    (if (dev? args) (reload/wrap-reload app) app)
+    {:port (port args)})
+  (timbre/info "server started on port"))
