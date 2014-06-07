@@ -1,5 +1,5 @@
 (ns agora.server
-  (:require [org.httpkit.server :as http-kit]
+  (:require [org.httpkit.server :as httpkit]
             [agora.handler :refer [app]]
             [ring.middleware.reload :as reload]
             [taoensso.timbre :as timbre])
@@ -28,8 +28,16 @@
     (Integer/parseInt port)
     3000))
 
-(defn -main [& args]
-  (http-kit/run-server
+#_(defn -main [& args]
+  (httpkit/run-server
     (if (dev? args) (reload/wrap-reload app) app)
     {:port (port args)})
   (timbre/info "server started on port"))
+
+(defn run-svr
+  [port]
+  (httpkit/run-server app {:port port}))
+
+(defn -main [& args]
+  #_(httpkit/run-server app {:port 3000})
+  (run-svr 3000))

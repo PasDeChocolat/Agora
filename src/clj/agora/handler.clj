@@ -5,7 +5,9 @@
             [taoensso.timbre :as timbre]
             [taoensso.timbre.appenders.rotor :as rotor]
             [agora.routes.home :refer [home-routes]]
-            [agora.middleware :refer [wrap-timbre]]))
+            [agora.routes.socket :refer [socket-routes]]
+            [agora.middleware :refer [wrap-timbre]]
+            [ring.util.response :refer [file-response]]))
 
 (defn init
   "init will be called once when
@@ -22,11 +24,12 @@
   (timbre/info "agora is shutting down..."))
 
 (defroutes app-routes
-  ;; (GET "/async" [] async-handler) ;; asynchronous(long polling)
   (route/resources "/") ; {:root "resources"})
   (route/not-found "Not Found"))
 
+(def all-routes (routes socket-routes
+                        home-routes
+                        app-routes))
 (def app
-  (-> (compojure-handler/site
-       (routes home-routes app-routes))
+  (-> (compojure-handler/site #'all-routes)
       (wrap-timbre {})))
