@@ -8,9 +8,6 @@
                  [om "0.6.4"]
                  [ring "1.2.2"]
                  [ring-server "0.3.1"]
-                 ;; [ring-serve "0.1.2"]
-                 ;; [ring/ring-jetty-adapter "1.0.0"]
-
                  [compojure "1.1.8"]
                  [domina "1.0.2"]
                  [com.taoensso/timbre "3.2.1"]
@@ -21,14 +18,21 @@
             [lein-ring "0.8.10"]]
   :hooks [leiningen.cljsbuild]
   :source-paths ["src/clj"]
-  :cljsbuild { 
-    :builds {
-      :main {
-        :source-paths ["src/cljs"]
-        :compiler {:output-to "resources/public/js/agora.js"
-                   :optimizations :simple
-                   :pretty-print true}
-        :jar true}}}
+  :cljsbuild {:builds [{:id "dev"
+                        :source-paths ["src/cljs"]
+                        :compiler {:output-to "resources/public/js/agora.js"
+                                   :output-dir "resources/public/js/out"
+                                   :optimizations :none
+                                   :pretty-print true
+                                   :source-map true}}
+                       {:id "prod"
+                        :source-paths ["src/cljs"]
+                        :compiler {:output-to "resources/public/js/prod/agora.js"
+                                   :output-dir "resources/public/js/prod/out"
+                                   :optimizations :advanced
+                                   :pretty-print false
+                                   :source-map "resources/public/js/prod/agora.js.map"}
+                        :jar true}]}
   :main agora.server
   :ring {:handler agora.server/app})
 

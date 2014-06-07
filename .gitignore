@@ -13,4 +13,7 @@ pom.xml.asc
 
 .DS_Store
 .nrepl-port
-resources/public/js/agora.js
+agora.js
+agora.js.map
+resources/public/js/out
+resources/public/js/prod/out
