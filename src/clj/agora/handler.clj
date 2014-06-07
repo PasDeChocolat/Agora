@@ -1,16 +1,10 @@
 (ns agora.handler
-  (:require [compojure.core :refer [GET defroutes]]
-            ;; [agora-luminus-http-kit.routes.home :refer [home-routes]]
-            ;; [agora-luminus-http-kit.middleware :as middleware]
-            ;; [noir.util.middleware :refer [app-handler]]
+  (:require [compojure.core :refer [GET defroutes routes]]
+            [agora.routes.home :refer [home-routes]]
             [compojure.handler :as compojure-handler]
             [compojure.route :as route]
             [taoensso.timbre :as timbre]
-            [taoensso.timbre.appenders.rotor :as rotor]
-            ;; [selmer.parser :as parser]
-            ;; [environ.core :refer [env]]
-            ;; [agora-luminus-http-kit.routes.cljsexample :refer [cljs-routes]]
-            ))
+            [taoensso.timbre.appenders.rotor :as rotor]))
 
 (defn init
   "init will be called once when
@@ -32,4 +26,5 @@
   (route/not-found "Not Found"))
 
 (def app
-  (compojure-handler/site #'app-routes))
+  (compojure-handler/site
+   (routes home-routes app-routes)))
