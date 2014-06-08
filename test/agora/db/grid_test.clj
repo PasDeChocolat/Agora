@@ -2,6 +2,7 @@
   (:require
    [expectations :refer :all]
    [agora.db.grid :refer :all :as grid]
+   [agora.db.result :as ar]
    [datomic.api :as d]))
 
 (defn create-empty-in-memory-db
@@ -35,6 +36,12 @@
           (magnitude-at {:x 10 :y 20})))
 
 ;; Create point and make sure it belongs to the grid
+(expect grid/DEFAULT-GRID-NAME
+        (do
+          (mark-point {:x 11 :y 22} 3.3)
+          (let [pt-id (point-at {:x 11 :y 22})
+                grid-id (grid-with pt-id)]
+            (ar/maybe (d/db conn) grid-id :grid/name))))
 
 ;; Change a point's value
 
