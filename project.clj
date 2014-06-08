@@ -13,6 +13,8 @@
                  [com.taoensso/timbre "3.2.1"]
                  [http-kit "2.1.18"]
                  [clj-time "0.7.0"]
+                 [com.datomic/datomic-free "0.9.4815"]
+                 [expectations "2.0.7"]
                  [com.cemerick/piggieback "0.0.5"]]
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-ring "0.8.10"]]

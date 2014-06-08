@@ -1,0 +1,40 @@
+[;; Create partition for Grid data
+ {:db/id #db/id[:db.part/db]
+  :db/ident :grid-part
+  :db.install/_partition :db.part/db}
+
+ ;; Make the :point/xy a unique ID to allow upsert.
+ ;; This assumes that an X, Y location for a grid point
+ ;; uniquely identifies an entity.
+ ;; See "Unique Identities" for details: http://docs.datomic.com/identity.html
+ {:db/id #db/id[:db.part/db]
+  :db/ident :point/xy
+  :db/unique :db.unique/identity
+  :db/valueType :db.type/string
+  :db/cardinality :db.cardinality/one
+  :db/doc "The X and Y coordinate of a point in the grid (space delim, unique)"
+  :db.install/_attribute :db.part/db}
+ 
+ {:db/id #db/id[:db.part/db]
+  :db/ident :point/magnitude
+  :db/valueType :db.type/bigdec
+  :db/cardinality :db.cardinality/one
+  :db/doc "The value stored at a point in the grid (0-100)"
+  :db.install/_attribute :db.part/db}
+
+ ;; Grids contain points
+ {:db/id #db/id[:db.part/db]
+  :db/ident :grid/name
+  :db/unique :db.unique/identity
+  :db/valueType :db.type/string
+  :db/cardinality :db.cardinality/one
+  :db/doc "The name of a grid (unique)"
+  :db.install/_attribute :db.part/db}
+
+ {:db/id #db/id[:db.part/db]
+  :db/ident :grid/points
+  :db/valueType :db.type/ref
+  :db/cardinality :db.cardinality/many
+  :db/doc "The points belonging to a grid"
+  :db.install/_attribute :db.part/db}
+ ]
