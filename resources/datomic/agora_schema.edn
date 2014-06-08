@@ -17,7 +17,7 @@
  
  {:db/id #db/id[:db.part/db]
   :db/ident :point/magnitude
-  :db/valueType :db.type/bigdec
+  :db/valueType :db.type/double
   :db/cardinality :db.cardinality/one
   :db/doc "The value stored at a point in the grid (0-100)"
   :db.install/_attribute :db.part/db}

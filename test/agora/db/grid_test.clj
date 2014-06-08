@@ -22,13 +22,17 @@
                 grid-e (d/entity (d/db conn) grid-id)]
            (get grid-e :grid/name))))
 
-;; Write to grid point and retrieve value
-#_(expect 99.9
+;; Write to grid point and retrieve value (double)
+(expect 99.9
         (with-redefs [conn (create-empty-in-memory-db)]
           (do
             (mark-point {:x 10 :y 20} 99.9)
             (magnitude-at {:x 10 :y 20}))))
 
+;; Create point and make sure it belongs to the grid
+
 ;; Change a point's value
+
+;; Make sure there is only one point after updating its value
 
 ;; Retrieve all the points in a grid

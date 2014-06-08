@@ -8,7 +8,7 @@
 
 (ns agora.db.query
   (:require
-   ;; 
+   [agora.db.schema :as schema] 
    [datomic.api :as d]))
 
 (defn only
@@ -64,20 +64,22 @@
   (->> (apply d/q query db args)
        (mapv first)))
 
-#_(defn maybe
+(defn maybe
   "Returns the value of attr for e, or if-not if e does not possess
    any values for attr. Cardinality-many attributes will be
    returned as a set"
-  [db e attr if-not]
-  (let [result (d/q '[:find ?v
-                      :in $ ?e ?a
-                      :where [?e ?a ?v]]
-                    db e (d/entid db attr))]
-    (if (seq result)
-      (case (schema/cardinality db attr)
-            :db.cardinality/one (ffirst result)
-            :db.cardinality/many (into #{} (map first result)))
-      if-not)))
+  ([db e attr]
+     (maybe db e attr nil))
+  ([db e attr if-not]
+     (let [result (d/q '[:find ?v
+                         :in $ ?e ?a
+                         :where [?e ?a ?v]]
+                       db e (d/entid db attr))]
+       (if (seq result)
+         (case (schema/cardinality db attr)
+           :db.cardinality/one (ffirst result)
+           :db.cardinality/many (into #{} (map first result)))
+         if-not))))
 
 (defn modes
   "Returns the set of modes."
@@ -91,3 +93,24 @@
            (> v ct) [#{k} v]))
         [#{} 2])
        first))
+
+
+;; ----- ADDED BY KYLE -----
+
+(defn maybe-r
+  "Returns the value of single result, or if-not"
+  ([result]
+     (maybe-r result nil))
+  ([result if-not]
+     (if (seq result)
+       (only result)
+       if-not)))
+
+(defn maybe-rs
+  "Returns the value of a cardinality many result, or if-not"
+  ([result]
+     (maybe-rs result nil))
+  ([result if-not]
+     (if (seq result)
+       (into #{} (map first result))
+       if-not)))
