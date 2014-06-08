@@ -15,19 +15,24 @@
       (d/transact conn schema)
       conn)))
 
+(defn in-context
+  "rebind a var, expecations are run in the defined context"
+  {:expectations-options :in-context}
+  [work]
+  (with-redefs [conn (create-empty-in-memory-db)]
+    (work)))
+
 ;; Default grid has default name
 (expect grid/DEFAULT-GRID-NAME
-        (with-redefs [conn (create-empty-in-memory-db)]
-          (let [grid-id (default-grid)
-                grid-e (d/entity (d/db conn) grid-id)]
-           (get grid-e :grid/name))))
+        (let [grid-id (default-grid)
+              grid-e (d/entity (d/db conn) grid-id)]
+          (get grid-e :grid/name)))
 
 ;; Write to grid point and retrieve value (double)
 (expect 99.9
-        (with-redefs [conn (create-empty-in-memory-db)]
-          (do
-            (mark-point {:x 10 :y 20} 99.9)
-            (magnitude-at {:x 10 :y 20}))))
+        (do
+          (mark-point {:x 10 :y 20} 99.9)
+          (magnitude-at {:x 10 :y 20})))
 
 ;; Create point and make sure it belongs to the grid
 
