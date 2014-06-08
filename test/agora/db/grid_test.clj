@@ -31,9 +31,16 @@
 
 ;; Write to grid point and retrieve value (double)
 (expect 99.9
-        (do
-          (mark-point {:x 10 :y 20} 99.9)
-          (magnitude-at {:x 10 :y 20})))
+        (let [loc {:x 10 :y 20}]
+          (mark-point loc 99.9)
+          (magnitude-at loc)))
+
+;; Check values at different points in DB history
+(let [loc {:x 10 :y 20}]
+  (expect (more-of tx
+                   nil? (magnitude-at (get tx :db-before) loc)
+                   99.9 (magnitude-at (get tx :db-after) loc))
+          (mark-point loc 99.9)))
 
 ;; Create point and make sure it belongs to the grid
 (expect grid/DEFAULT-GRID-NAME

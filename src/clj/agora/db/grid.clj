@@ -72,12 +72,14 @@
 
 (defn magnitude-at
   "Retrieve the magnitude of a point at a grid location"
-  [{:keys [x y]}]
-  (ar/maybe-r
-   (d/q '[:find ?magnitude
-          :in $ ?xy
-          :where
-          [?point :point/xy ?xy]
-          [?point :point/magnitude ?magnitude]]
-        (d/db conn)
-        (point-key x y))))
+  ([xy]
+     (magnitude-at (d/db conn) xy))
+  ([db {:keys [x y]}]
+     (ar/maybe-r
+      (d/q '[:find ?magnitude
+             :in $ ?xy
+             :where
+             [?point :point/xy ?xy]
+             [?point :point/magnitude ?magnitude]]
+           db
+           (point-key x y)))))
