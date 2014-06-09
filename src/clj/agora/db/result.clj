@@ -32,12 +32,3 @@
      (if (seq result)
        (query/only result)
        if-not)))
-
-(defn maybe-rs
-  "Returns the value of a cardinality many result, or if-not"
-  ([result]
-     (maybe-rs result nil))
-  ([result if-not]
-     (if (seq result)
-       (into #{} (map first result))
-       if-not)))

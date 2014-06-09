@@ -28,10 +28,15 @@
         (d/db conn)
         point)))
 
-(defn create-default-grid
-  []
-  @(d/transact conn [{:db/id (d/tempid :grid-part)
-                     :grid/name DEFAULT-GRID-NAME}]))
+(defn create-grid
+  ([]
+     (create-grid DEFAULT-GRID-NAME))
+  ([name]
+     @(d/transact conn [{:db/id (d/tempid :grid-part)
+                         :grid/name name}])))
+
+(defn create-default-grid []
+  (create-grid))
 
 (defn default-grid
   "The default grid entity ID"
@@ -67,13 +72,11 @@
 
 (defn mark-point
   "Set a magnitude for a grid point"
-  ([xy mag]
-     (mark-point xy mag (default-grid)))
-  ([{:keys [x y]} mag grid]
-     @(d/transact conn [{:db/id (d/tempid :grid-part)
-                         :point/xy (point-key x y)
-                         :point/magnitude mag
-                         :grid/_points grid}])))
+  [{:keys [x y grid] :or {grid (default-grid)}} mag]
+  @(d/transact conn [{:db/id (d/tempid :grid-part)
+                      :point/xy (point-key x y)
+                      :point/magnitude mag
+                      :grid/_points grid}]))
 
 (defn magnitude-at
   "Retrieve the magnitude of a point at a grid location"
@@ -88,3 +91,15 @@
              [?point :point/magnitude ?magnitude]]
            db
            (point-key x y)))))
+
+(defn grid-points
+  "Points in a grid (or all grids if none given)"
+  ([]
+     (aq/find-all-by (d/db conn) :point/xy))
+  ([grid]
+     (d/q '[:find ?point
+            :in $ ?grid
+            :where
+            [?grid :grid/points ?point]]
+          (d/db conn)
+          grid)))

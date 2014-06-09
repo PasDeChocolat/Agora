@@ -57,7 +57,14 @@
           (mark-point {:x 2 :y 2} 2.0)
           (mark-point {:x 3 :y 2} 3.0)
           (count
-           (query/find-all-by (d/db conn) :point/xy))))
+           (grid-points))))
 
 ;; Mark points in separate grids
-#_(expect (more-of ))
+(expect 2
+        (let [g-id #(last (first (:tempids %)))
+              g1 (g-id (create-default-grid))
+              g2 (g-id (create-grid "another-grid"))]
+          (mark-point {:x 1 :y 2 :grid g1} 1.0)
+          (mark-point {:x 3 :y 4 :grid g2} 2.0)
+          (+ (count (grid-points g1))
+             (count (grid-points g2)))))
