@@ -1,6 +1,19 @@
 (ns agora.db.result
   (:require
-   [agora.db.query :refer [only] :as query]))
+   [agora.db.query :as query]))
+
+(defn find-all-by
+  "Returns all entities possessing attr (and optional val)."
+  ([db attr]
+     (query/qes '[:find ?e
+            :in $ ?attr
+            :where [?e ?attr]]
+          db attr))
+  ([db attr val]
+     (query/qes '[:find ?e
+            :in $ ?attr
+            :where [?e ?attr ?val]]
+          db attr val)))
 
 (defn maybe
   "Returns the value of attr for e, or if-not if e does not possess
@@ -17,7 +30,7 @@
      (maybe-r result nil))
   ([result if-not]
      (if (seq result)
-       (only result)
+       (query/only result)
        if-not)))
 
 (defn maybe-rs

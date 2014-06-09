@@ -2,26 +2,9 @@
   (:require
    [expectations :refer :all]
    [agora.db.grid :refer :all :as grid]
+   [agora.db.query :as query]
    [agora.db.result :as ar]
    [datomic.api :as d]))
-
-(defn create-empty-in-memory-db
-  "Create a blank, in-memory Datomic DB"
-  []
-  (let [uri "datomic:mem://agora-test"]
-    (d/delete-database uri)
-    (d/create-database uri)
-    (let [conn (d/connect uri)
-          schema (load-file "resources/datomic/agora_schema.edn")]
-      (d/transact conn schema)
-      conn)))
-
-(defn in-context
-  "rebind a var, expecations are run in the defined context"
-  {:expectations-options :in-context}
-  [work]
-  (with-redefs [conn (create-empty-in-memory-db)]
-    (work)))
 
 ;; Default grid has default name
 (expect grid/DEFAULT-GRID-NAME
@@ -51,7 +34,30 @@
             (ar/maybe (d/db conn) grid-id :grid/name))))
 
 ;; Change a point's value
+(expect 2.0
+        (let [loc {:x 4 :y 2}]
+          (mark-point loc 1.0)
+          (mark-point loc 2.0)
+          (magnitude-at loc)))
 
 ;; Make sure there is only one point after updating its value
+(expect 1
+        (let [loc {:x 4 :y 2}]
+          (mark-point loc 1.0)
+          (mark-point loc 2.0)
+          (count
+           (ar/find-all-by (d/db conn)
+                           :point/xy
+                           (point-key loc)))))
 
 ;; Retrieve all the points in a grid
+(expect 3
+        (do
+          (mark-point {:x 1 :y 2} 1.0)
+          (mark-point {:x 2 :y 2} 2.0)
+          (mark-point {:x 3 :y 2} 3.0)
+          (count
+           (query/find-all-by (d/db conn) :point/xy))))
+
+;; Mark points in separate grids
+#_(expect (more-of ))

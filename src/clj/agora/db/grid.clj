@@ -46,8 +46,13 @@
 (defn point-key
   "Create a point entity key from x and y values
    Extendable to more args (coords)"
-  [& args]
-  (apply str (interpose " " args)))
+  ([{:keys [x y]}]
+     (point-key x y))
+  ([x y & more-args]
+     (let [coords (if (seq more-args)
+                    (apply conj [x y] more-args)
+                    [x y])]
+       (apply str (interpose " " coords)))))
 
 (defn point-at
   "Return entity ID of grid point at location"
