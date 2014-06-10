@@ -1,6 +1,6 @@
 (defproject agora "0.1.0-SNAPSHOT"
-  :description "FIXME: write this!"
-  :url "http://example.com/FIXME"
+  :description "The Kakaako Agora space has a framework."
+  :url "https://github.com/PasDeChocolat/Agora"
   :dev-dependencies [[lein-ring "0.8.10"]]
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2227"]
@@ -14,7 +14,6 @@
                  [http-kit "2.1.18"]
                  [clj-time "0.7.0"]
                  [com.datomic/datomic-free "0.9.4815"]
-                 [expectations "2.0.7"]
                  [com.cemerick/piggieback "0.0.5"]]
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-ring "0.8.10"]]
