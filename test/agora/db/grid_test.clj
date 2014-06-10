@@ -1,70 +1,103 @@
 (ns agora.db.grid-test
   (:require
-   [expectations :refer :all]
+   [clojure.test :refer :all]
    [agora.db.grid :refer :all :as grid]
    [agora.db.query :as query]
    [agora.db.result :as ar]
    [datomic.api :as d]))
 
+(defn create-empty-in-memory-db
+  "Create a blank, in-memory Datomic DB"
+  []
+  (let [uri "datomic:mem://agora-test"]
+    (d/delete-database uri)
+    (d/create-database uri)
+    (let [conn (d/connect uri)
+          schema (load-file "resources/datomic/agora_schema.edn")]
+      (d/transact conn schema)
+      conn)))
+
+(defn in-test-db-context
+  "rebind a var, expecations are run in the defined context"
+  [work]
+  (with-redefs [conn (create-empty-in-memory-db)]
+    (work)))
+
+(defn clean-db
+  [f]
+  (create-empty-in-memory-db)
+  (in-test-db-context f))
+
+(use-fixtures :each clean-db)
+
 ;; Default grid has default name
-(expect grid/DEFAULT-GRID-NAME
-        (let [grid-id (default-grid)
-              grid-e (d/entity (d/db conn) grid-id)]
-          (get grid-e :grid/name)))
+(deftest grid-default-name-test
+  (testing "grid has default name"
+    (let [grid-id (default-grid)
+          grid-e (d/entity (d/db conn) grid-id)]
+      (is (= grid/DEFAULT-GRID-NAME
+             (get grid-e :grid/name))))))
 
 ;; Write to grid point and retrieve value (double)
-(expect 99.9
-        (let [loc {:x 10 :y 20}]
+(deftest mark-point-and-retrieve-value-test
+  (testing "mark a point and retrieve its value"
+    (let [loc {:x 10 :y 20}]
           (mark-point loc 99.9)
-          (magnitude-at loc)))
+          (is (= 99.9 (magnitude-at loc))))))
 
 ;; Check values at different points in DB history
-(let [loc {:x 10 :y 20}]
-  (expect (more-of tx
-                   nil? (magnitude-at (get tx :db-before) loc)
-                   99.9 (magnitude-at (get tx :db-after) loc))
-          (mark-point loc 99.9)))
+(deftest point-values-in-history-test
+  (testing "point values in past history"
+    (let [loc {:x 10 :y 20}
+          tx (mark-point loc 99.9)]
+      (is (nil? (magnitude-at (get tx :db-before) loc)))
+      (is (= 99.9 (magnitude-at (get tx :db-after) loc))))))
 
 ;; Create point and make sure it belongs to the grid
-(expect grid/DEFAULT-GRID-NAME
-        (let [loc {:x 11 :y 22}]
-          (mark-point loc 3.3)
-          (let [pt-id (point-at loc)
-                grid-id (grid-with pt-id)]
-            (ar/maybe (d/db conn) grid-id :grid/name))))
+(deftest point-belongs-to-grid-test
+  (testing "point belongs to a grid"
+    (let [loc {:x 11 :y 22}
+          _ (mark-point loc 3.3)
+          pt-id (point-at loc)
+          grid-id (grid-with pt-id)]          
+      (is (= grid/DEFAULT-GRID-NAME
+             (ar/maybe (d/db conn) grid-id :grid/name))))))
 
 ;; Change a point's value
-(expect 2.0
-        (let [loc {:x 4 :y 2}]
+(deftest change-points-value-test
+  (testing "changing a point's value"
+    (let [loc {:x 4 :y 2}]
           (mark-point loc 1.0)
           (mark-point loc 2.0)
-          (magnitude-at loc)))
+          (is (= 2.0 (magnitude-at loc))))))
 
 ;; Make sure there is only one point after updating its value
-(expect 1
-        (let [loc {:x 4 :y 2}]
+(deftest updating-same-point-test
+  (testing "only one entity exists after updating a point"
+    (let [loc {:x 4 :y 2}]
           (mark-point loc 1.0)
           (mark-point loc 2.0)
-          (count
-           (ar/find-all-by (d/db conn)
-                           :point/xy
-                           (point-key loc)))))
+          (is (= 1 (count
+                    (ar/find-all-by (d/db conn)
+                                    :point/xy
+                                    (point-key loc))))))))
 
 ;; Retrieve all the points in a grid
-(expect 3
-        (do
-          (mark-point {:x 1 :y 2} 1.0)
-          (mark-point {:x 2 :y 2} 2.0)
-          (mark-point {:x 3 :y 2} 3.0)
-          (count
-           (grid-points))))
+(deftest retrieving-all-points-in-a-grid-test
+  (testing "mark points and retrive via the grid ref"
+    (mark-point {:x 1 :y 2} 1.0)
+    (mark-point {:x 2 :y 2} 2.0)
+    (mark-point {:x 3 :y 2} 3.0)
+    (is (= 3 (count
+              (grid-points))))))
 
 ;; Mark points in separate grids
-(expect 2
-        (let [g-id #(last (first (:tempids %)))
-              g1 (g-id (create-default-grid))
-              g2 (g-id (create-grid "another-grid"))]
+(deftest mark-points-in-separate-grid-test
+  (testing "points belong to separate grids"
+   (let [g-id #(last (first (:tempids %)))
+         g1 (g-id (create-default-grid))
+         g2 (g-id (create-grid "another-grid"))]
           (mark-point {:x 1 :y 2 :grid g1} 1.0)
           (mark-point {:x 3 :y 4 :grid g2} 2.0)
-          (+ (count (grid-points g1))
-             (count (grid-points g2)))))
+          (is (= 2 (+ (count (grid-points g1))
+                      (count (grid-points g2))))))))
