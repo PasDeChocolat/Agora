@@ -51,6 +51,3 @@
         (is (nil? (:x pt-report))))
       (finally 
         (report/unsubscribe conn)))))
-
-;; subscribing to the correct queue
-;; adds grid name to subscribers list
