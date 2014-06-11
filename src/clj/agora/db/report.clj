@@ -24,6 +24,7 @@
 ;;  [277076930200554 :grid/points 277076930200556]
 ;; )
 (defn result-report
+  "Create report tuple for mark-point txns"
   [result]
   (d/q '[:find ?point ?xy ?mag ?grid-name
          :in $ [[?point ?a ?v]]
@@ -37,6 +38,7 @@
        (:tx-data result)))
 
 (defn point-data
+  "Only retuns non-nil for mark-point txns"
   [result]
   (if-let [tup (first (seq (result-report result)))]
     (let [xy (nth tup 1)

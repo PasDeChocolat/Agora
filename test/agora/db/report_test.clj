@@ -5,7 +5,7 @@
    [agora.db.report :refer :all :as report]
    [datomic.api :as d]
    [clojure.core.async :refer [>!! <! <!! chan close! go thread] :as async]
-   [agora.db.grid :refer [mark-point] :as grid]))
+   [agora.db.grid :refer [conn mark-point] :as grid]))
 
 (use-fixtures :each clean-db)
 
@@ -29,7 +29,7 @@
       ;; create grid first, otherwise this will be the first txn
       (grid/create-default-grid)
       
-      (report/subscribe grid/conn)
+      (report/subscribe conn)
       (mark-point  {:x 1 :y 2} 99.8)
       (let [c (report/async-next)
             _ (assert (not (nil? c)) "Channel should not be nil!")
@@ -37,8 +37,20 @@
             pt-report (point-data r)]
         (is (= 1 (:x pt-report))))
       (finally 
-        (report/unsubscribe grid/conn)))))
+        (report/unsubscribe conn)))))
 
 ;; next-tx on other kind of transaction (other than point update)
+(deftest ignore-next-tx-test
+  (testing "ignored txns are nil"
+    (try
+      (report/subscribe conn)
+      (grid/create-default-grid)
+      (let [c (report/async-next)
+            r (<!! c)
+            pt-report (point-data r)]
+        (is (nil? (:x pt-report))))
+      (finally 
+        (report/unsubscribe conn)))))
+
 ;; subscribing to the correct queue
 ;; adds grid name to subscribers list
