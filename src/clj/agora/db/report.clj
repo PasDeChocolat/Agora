@@ -51,10 +51,8 @@
 
 (defn async-next
   []
-  (when @tx-queue
+  (when (and @tx-queue
+             (.peek @tx-queue))
     (let [c (chan)]
-      (if (.peek @tx-queue)
-        (do
-          (go (>! c (.poll @tx-queue)))
-          (go (<! c)))
-        nil))))
+      (go (>! c (.poll @tx-queue)))
+      (go (<! c)))))
