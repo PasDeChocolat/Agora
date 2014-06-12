@@ -44,20 +44,22 @@
     (report/subscribe grid/conn)
     (future
       (loop []
-        (println "Looping with " (count (keys @channels)) " channels...")
-        (doseq [[channel ch-on?] @channels]
-          (when ch-on?
-            (when-let [pt-data (report/point-data (report/next-tx))]
-              (httpkit/send! channel
-                             (pr-str {:msg pt-data
-                                      :name "datomic"})
-                             false))))
+        (info "Looping with " (count (keys @channels)) " channels...")
+        (when (should-loop-tx-push channels)
+          (when-let [pt-data (report/point-data (report/next-tx))]
+            (info "perparing to send: " pt-data)
+            (doseq [[channel ch-on?] @channels]
+              (when ch-on?
+                (httpkit/send! channel
+                               (pr-str {:msg pt-data
+                                        :name "datomic"})
+                               false)))))
         (if (should-loop-tx-push channels)
           (do
             (Thread/sleep 5000)
             (recur))
           (do
-            (println "will not recur.")
+            (info "will not recur.")
             (report/unsubscribe grid/conn)
             (reset! looping false)))))))
 
@@ -66,10 +68,9 @@
   (httpkit/with-channel ring-request channel    ; get the channel
     (if (httpkit/websocket? channel) ; if you want to distinguish them
       (do
-        (if-not (find @agora-channels channel)
-          (do
-            (println "set up new closed channel")
-            (swap! agora-channels assoc channel false)))
+        (when-not (find @agora-channels channel)
+          (info "set up new closed channel")
+          (swap! agora-channels assoc channel false))
         (httpkit/on-receive channel (fn [raw] ; two way communication
                                      (let [data (edn/read-string raw)
                                            name (:name data)
@@ -82,14 +83,13 @@
                                          "stop polling" (swap! agora-channels assoc channel false)
                                          nil)
                                        (doseq [c (keys @agora-channels)]
-                                         (if (get @agora-channels c)
+                                         (when (get @agora-channels c)
                                            (httpkit/send!
                                             c (pr-str {:msg msg
                                                        :name name
                                                        :timestamp (.toString (lt/local-now))}
                                                       )
-                                            false)
-                                           (println "not sending: " msg))))))
+                                            false))))))
         (httpkit/on-close channel (fn [status]
                                     (swap! agora-channels dissoc channel)
                                     (info "Channel closed: " status))))
