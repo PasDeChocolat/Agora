@@ -71,25 +71,26 @@
         (when-not (find @agora-channels channel)
           (info "set up new closed channel")
           (swap! agora-channels assoc channel false))
-        (httpkit/on-receive channel (fn [raw] ; two way communication
-                                     (let [data (edn/read-string raw)
-                                           name (:name data)
-                                           msg  (:msg data)]
-                                       (info "WebSocket: " data)
-                                       (case msg
-                                         "start polling" (do
-                                                           (swap! agora-channels assoc channel true)
-                                                           (start-tx-push agora-channels))
-                                         "stop polling" (swap! agora-channels assoc channel false)
-                                         nil)
-                                       (doseq [c (keys @agora-channels)]
-                                         (when (get @agora-channels c)
-                                           (httpkit/send!
-                                            c (pr-str {:msg msg
-                                                       :name name
-                                                       :timestamp (.toString (lt/local-now))}
-                                                      )
-                                            false))))))
+        (httpkit/on-receive channel
+                            (fn [raw] ; two way communication
+                              (let [data (edn/read-string raw)
+                                    name (:name data)
+                                    msg  (:msg data)]
+                                (info "WebSocket: " data)
+                                (case msg
+                                  "start polling" (do
+                                                    (swap! agora-channels assoc channel true)
+                                                    (start-tx-push agora-channels))
+                                  "stop polling" (swap! agora-channels assoc channel false)
+                                  nil)
+                                (doseq [c (keys @agora-channels)]
+                                  (when (get @agora-channels c)
+                                    (httpkit/send!
+                                     c (pr-str {:msg msg
+                                                :name name
+                                                :timestamp (.toString (lt/local-now))}
+                                               )
+                                     false))))))
         (httpkit/on-close channel (fn [status]
                                     (swap! agora-channels dissoc channel)
                                     (info "Channel closed: " status))))
@@ -101,5 +102,4 @@
 
 (defroutes socket-routes
   (GET "/socket" [] socket-handler) ;; asynchronous(long polling)
-  (GET "/agora-socket" [] agora-socket-handler)
-  )
+  (GET "/agora-socket" [] agora-socket-handler))

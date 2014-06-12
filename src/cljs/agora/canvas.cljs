@@ -7,6 +7,15 @@
    [cljs.core.async.macros :refer [go]]
    [dommy.macros :refer [node sel sel1]]))
 
+(def COLS 20)
+(def ROWS 10)
+
+(def P 10)
+(def GW 40)
+(def CW (+ (* COLS GW) (* 2 P) 1))
+(def CH (+ (* ROWS GW) (* 2 P) 1))
+(def targets (atom {}))
+ 
 (def send (chan))
 (def receive (chan))
 
@@ -35,14 +44,19 @@
                         nil)]
          (.send ws {:msg msg :name "canvas"}))))))
 
+(defn update-canvas
+  [{:keys [x y magnitude grid-name]}]
+  (.log js/console "x y mag name " x " " y " " magnitude " " grid-name))
+
 (defn add-message []
   (go
    (while true
-     (let [msg            (<! receive)
-           _ (.log js/console "msg: " msg)
-           raw-data       (.-data msg)
-           data           (reader/read-string raw-data)]
-       (.log js/console "message recieved: " (clj->js data))))))
+     (let [msg      (<! receive)
+           raw-data (.-data msg)
+           data     (reader/read-string raw-data)]
+       (.log js/console "message recieved: " (clj->js data))
+       (if (= "datomic" (:name data))
+         (update-canvas (:msg data)))))))
 
 (defn make-receiver []
   (set! (.-onmessage ws) (fn [msg]
@@ -51,9 +65,26 @@
   (add-message)
   (.send ws {:msg "start polling" :name "canvas"}))
 
+(defn draw-grid
+  []
+  (let [canvas (.getElementById js/document "grid-canvas")
+        ctx (.getContext canvas "2d")
+        fill-w (- GW 2)]
+    (set! (.-fillStyle ctx) "rgb(0,0,0)")
+    (doall
+     (for [c (range 0 COLS)
+           r (range 0 ROWS)
+           :let [x (+ (inc P) (* c GW))
+                 y (+ (inc P) (* r GW))]]
+       (.fillRect ctx x y fill-w fill-w)))))
+
 (defn init! []
   (make-sender)
-  (make-receiver))
+  (make-receiver)
+  (dommy/append! (sel1 :#grid) [:canvas {:width CW
+                                         :height CH
+                                         :id "grid-canvas"}])
+  (draw-grid))
 
 (def on-load
   (when (sel1 :#live-canvas)
