@@ -1,11 +1,14 @@
 (ns agora.routes.socket
-  (:require [compojure.core :refer [GET defroutes]]
-            [clojure.edn :as edn]
-            [org.httpkit.server :as httpkit]
-            [clj-time.local :as lt]
-            [taoensso.timbre :as timbre
-             :refer (trace debug info warn error fatal spy with-log-level)]
-            [clojure.core.async :refer [go thread] :as async]))
+  (:require
+   [compojure.core :refer [GET defroutes]]
+   [clojure.edn :as edn]
+   [org.httpkit.server :as httpkit]
+   [clj-time.local :as lt]
+   [taoensso.timbre :as timbre
+    :refer (trace debug info warn error fatal spy with-log-level)]
+   [clojure.core.async :refer [<! go thread] :as async]
+   [agora.db.grid :as grid]
+   [agora.db.report :as report]))
 
 (def channels (atom []))
 
@@ -32,40 +35,31 @@
 (def agora-channels (atom {}))
 (def looping (atom false))
 (defn should-loop-tx-push [channels]
-  (println "checking if should push")
-  (println "channels: " channels)
-  (println "@channels: " @channels)
-  (let [push? (some #(not (nil? %)) (vals @channels))]
-    (println "should push: " push?)
-    push?))
+  (some #(not (nil? %)) (vals @channels)))
 
 (defn start-tx-push
   [channels]
   (when (not @looping)
     (reset! looping true)
-    (println "start looping !! ! !  !  ! ! ! !!!! !")
+    (report/subscribe grid/conn)
     (future
-     (loop []
-       (println "loop here...")
-       (doseq [[channel ch-on?] @channels]
-         (if ch-on?
-           (do
-             (println "sending looping tx report!... then sleeping")
-             (println (httpkit/open? channel))
-            (httpkit/send! channel
-                           (pr-str {:msg "looping tx report"
-                                    :name "datomic"})
-                           false))))
-       (println "done sending")
-       (if (should-loop-tx-push channels)
-         (do
-           (println "sleeping for a few...")
-           (Thread/sleep 5000)
-           (println "recur now...")
-           (recur))
-         (do
-           (println "will not recur.")
-           (reset! looping false)))))))
+      (loop []
+        (println "Looping with " (count (keys @channels)) " channels...")
+        (doseq [[channel ch-on?] @channels]
+          (when ch-on?
+            (when-let [pt-data (report/point-data (report/next-tx))]
+              (httpkit/send! channel
+                             (pr-str {:msg pt-data
+                                      :name "datomic"})
+                             false))))
+        (if (should-loop-tx-push channels)
+          (do
+            (Thread/sleep 5000)
+            (recur))
+          (do
+            (println "will not recur.")
+            (report/unsubscribe grid/conn)
+            (reset! looping false)))))))
 
 (defn agora-socket-handler [ring-request]
   ;; unified API for WebSocket and HTTP long polling/streaming
