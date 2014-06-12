@@ -54,6 +54,11 @@
         y (+ (inc P) (* r GW))]
     [x y]))
 
+(defn agora-mag->rgb
+  [magnitude]
+  (let [g (* 255.0 (/ magnitude 100.0))]
+    [g g g]))
+
 (defn fill-grid-point
   [col row [red green blue]]
   (let [canvas (.getElementById js/document CANVAS-ID)
@@ -66,16 +71,22 @@
 (defn update-targets
   []
   (.log js/console "looping targets...")
-  (doseq [[x y :as k] (keys @targets)]
-    (fill-grid-point x y [255 0 0])
-    (swap! targets dissoc k))
-  (js/clearInterval @looping-targets)
-  (reset! looping-targets nil))
+  (doseq [[col row :as k] (keys @targets)]
+    (let [{:keys [current magnitude] :as pt-data} (@targets k)
+          new-g (max magnitude (- current 5.0))
+          rgb (agora-mag->rgb new-g)]
+      (fill-grid-point col row rgb)
+      (if (= new-g magnitude)
+        (swap! targets dissoc k)
+        (swap! targets assoc k (assoc pt-data :current new-g)))))
+  (when-not (seq (keys @targets))
+    (js/clearInterval @looping-targets)
+    (reset! looping-targets nil)))
 
 (defn update-canvas
   [{:keys [x y magnitude grid-name]}]
   (.log js/console "x y mag name " x " " y " " magnitude " " grid-name)
-  (swap! targets assoc [x y] (* 255.0 (/ magnitude 100.0)))
+  (swap! targets assoc [x y] {:magnitude magnitude :current 100.0})
   (if (nil? @looping-targets)
     (reset! looping-targets (js/setInterval update-targets 1000))))
 
