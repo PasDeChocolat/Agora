@@ -7,14 +7,18 @@
    [cljs.core.async.macros :refer [go]]
    [dommy.macros :refer [node sel sel1]]))
 
+
+(def CANVAS-ID "grid-canvas")
 (def COLS 20)
 (def ROWS 10)
 
 (def P 10)
 (def GW 40)
+(def FILL-GW (- GW 2))
 (def CW (+ (* COLS GW) (* 2 P) 1))
 (def CH (+ (* ROWS GW) (* 2 P) 1))
 (def targets (atom {}))
+(def looping-targets (atom nil))
  
 (def send (chan))
 (def receive (chan))
@@ -44,9 +48,36 @@
                         nil)]
          (.send ws {:msg msg :name "canvas"}))))))
 
+(defn col-row->xy
+  [c r]
+  (let [x (+ (inc P) (* c GW))
+        y (+ (inc P) (* r GW))]
+    [x y]))
+
+(defn fill-grid-point
+  [col row [red green blue]]
+  (let [canvas (.getElementById js/document CANVAS-ID)
+        ctx (.getContext canvas "2d")
+        color (str "rgb(" red "," green "," blue ")")
+        [x y] (col-row->xy col row)]
+    (set! (.-fillStyle ctx) color)
+    (.fillRect ctx x y FILL-GW FILL-GW)))
+
+(defn update-targets
+  []
+  (.log js/console "looping targets...")
+  (doseq [[x y :as k] (keys @targets)]
+    (fill-grid-point x y [255 0 0])
+    (swap! targets dissoc k))
+  (js/clearInterval @looping-targets)
+  (reset! looping-targets nil))
+
 (defn update-canvas
   [{:keys [x y magnitude grid-name]}]
-  (.log js/console "x y mag name " x " " y " " magnitude " " grid-name))
+  (.log js/console "x y mag name " x " " y " " magnitude " " grid-name)
+  (swap! targets assoc [x y] (* 255.0 (/ magnitude 100.0)))
+  (if (nil? @looping-targets)
+    (reset! looping-targets (js/setInterval update-targets 1000))))
 
 (defn add-message []
   (go
@@ -68,15 +99,13 @@
 (defn draw-grid
   []
   (let [canvas (.getElementById js/document "grid-canvas")
-        ctx (.getContext canvas "2d")
-        fill-w (- GW 2)]
+        ctx (.getContext canvas "2d")]
     (set! (.-fillStyle ctx) "rgb(0,0,0)")
     (doall
      (for [c (range 0 COLS)
            r (range 0 ROWS)
-           :let [x (+ (inc P) (* c GW))
-                 y (+ (inc P) (* r GW))]]
-       (.fillRect ctx x y fill-w fill-w)))))
+           :let [[x y] (col-row->xy c r)]]
+       (.fillRect ctx x y FILL-GW FILL-GW)))))
 
 (defn init! []
   (make-sender)
