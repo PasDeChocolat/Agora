@@ -28,16 +28,16 @@
     (Integer/parseInt port)
     3000))
 
-#_(defn -main [& args]
-  (httpkit/run-server
-    (if (dev? args) (reload/wrap-reload app) app)
-    {:port (port args)})
-  (timbre/info "server started on port"))
-
 (defn run-svr
   [port]
   (httpkit/run-server app {:port port}))
 
-(defn -main [& args]
-  #_(httpkit/run-server app {:port 3000})
-  (run-svr 3000))
+(defn -main
+  "Start the server
+   -dev for wrap-reload behavior
+   port can be passed for port other than 3000."
+  [& args]
+  (if (dev? args) (reload/wrap-reload app) app)
+  (let [p (port args)]
+    (timbre/info "starting server on port" p)
+    (run-svr p)))

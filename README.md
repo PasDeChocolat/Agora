@@ -23,15 +23,26 @@ Giving it the following novel properties:
 ## Setup
 
 ```` bash
-# Start web server (auto-detect src/clj changes):
-lein ring server
+# Start web server:
+lein run
+
+# Start with reload behavior:
+lein run -dev
+
+# Start on port other than 3000:
+lein run 4000
+
+# Both -dev and port can be combined.
 ````
 
 ````bash
 # Start web server (from REPL):
-# go to the src/clj agora.server ns and run:
-(repl-serve)
+# go to the src/clj/agora/repl.clj ns and run:
+(start-server)
 ;; re-eval src/clj files to see changes
+
+# Stop server:
+(stop-server)
 ````
 
 ````bash
@@ -40,10 +51,12 @@ lein cljsbuild auto
 ````
 
 ````bash
-# Package and run:
+# Package and run (untested):
 lein ring uberjar
 java -jar target/agora-0.1.0-SNAPSHOT-standalone.jar
 ````
 
+## Datomic
+Use Datomic Free and start a server on localhost:4334.
 
 
