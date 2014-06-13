@@ -21,6 +21,7 @@
 (def targets (atom {}))
 (def looping-targets (atom nil))
 (def COLOR-INC 5.0)
+(def INC-INTERVAL-MILLIS 250)
 
 (def send (chan))
 (def receive (chan))
@@ -138,7 +139,7 @@
   (swap! targets assoc [x y] {:magnitude magnitude
                               :current 100.0})
   (if (nil? @looping-targets)
-    (reset! looping-targets (js/setInterval update-targets 1000))))
+    (reset! looping-targets (js/setInterval update-targets INC-INTERVAL-MILLIS))))
 
 (defn add-message []
   (go

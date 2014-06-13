@@ -37,6 +37,19 @@
 (defn should-loop-tx-push [channels]
   (some #(not (nil? %)) (vals @channels)))
 
+(defn push-txns
+  [channels]
+  (while (report/has-next-tx?)
+   (when-let [pt-data (report/point-data (report/next-tx))]
+     (info "preparing to send: " pt-data)
+     (doseq [[channel ch-on?] @channels]
+       (when ch-on?
+         (httpkit/send! channel
+                        (pr-str {:msg pt-data
+                                 :name "datomic"
+                                 :type :db-txn})
+                        false))))))
+
 (defn start-tx-push
   [channels]
   (when (not @looping)
@@ -46,15 +59,7 @@
       (loop []
         (info "Looping with " (count (keys @channels)) " channels...")
         (when (should-loop-tx-push channels)
-          (when-let [pt-data (report/point-data (report/next-tx))]
-            (info "perparing to send: " pt-data)
-            (doseq [[channel ch-on?] @channels]
-              (when ch-on?
-                (httpkit/send! channel
-                               (pr-str {:msg pt-data
-                                        :name "datomic"
-                                        :type :db-txn})
-                               false)))))
+          (push-txns channels))
         (if (should-loop-tx-push channels)
           (do
             (Thread/sleep 5000)

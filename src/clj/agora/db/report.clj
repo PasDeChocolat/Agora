@@ -63,10 +63,14 @@
       :grid-name (nth tup 3)})
     nil))
 
+(defn has-next-tx?
+  []
+  (and @tx-queue
+       (.peek @tx-queue)))
+
 (defn next-tx
   []
-  (when (and @tx-queue
-             (.peek @tx-queue))
+  (when (has-next-tx?)
     (.poll @tx-queue)))
 
 (defn async-next-tx
