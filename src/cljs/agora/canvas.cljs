@@ -9,12 +9,12 @@
 
 
 (def CANVAS-ID "grid-canvas")
-(def COLS 20)
-(def ROWS 10)
+(def COLS 80)
+(def ROWS 40)
 
 (def P 10)
-(def GW 40)
-(def FILL-GW (- GW 2))
+(def GW 10)
+(def FILL-GW (- GW 1))
 (def CW (+ (* COLS GW) (* 2 P) 1))
 (def CH (+ (* ROWS GW) (* 2 P) 1))
 
@@ -93,7 +93,6 @@
         color (rgb->css-rgb red green blue)
         [x y] (col-row->xy col row)]
     (set! (.-fillStyle ctx) color)
-    (.log js/console "filling" col ":" row "=" color)
     (.fillRect ctx x y FILL-GW FILL-GW)))
 
 (defn random-magnitude
@@ -120,8 +119,7 @@
 
 (defn update-targets
   []
-  (.log js/console "looping targets...")
-  (.log js/console (clj->js @targets))
+  (.log js/console "looping" (count (keys @targets)) "targets...")
   (doseq [[col row :as k] (keys @targets)]
     (let [{:keys [current magnitude] :as pt-data} (@targets k)
           new-g (max magnitude (- current COLOR-INC))
