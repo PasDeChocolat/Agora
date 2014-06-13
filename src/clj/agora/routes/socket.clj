@@ -63,6 +63,21 @@
             (report/unsubscribe grid/conn)
             (reset! looping false)))))))
 
+(defn handle-polling
+  [channel msg]
+  (case msg
+     "start polling" (do
+                       (swap! agora-channels assoc channel true)
+                       (start-tx-push agora-channels))
+     "stop polling" (swap! agora-channels assoc channel false)
+     nil))
+
+(defn handle-update
+  [{:keys [msg x y magnitude]}]
+  (when (= msg "mark-point")
+    (let [mag (double magnitude)]
+      (grid/mark-point {:x x :y y} mag))))
+
 (defn agora-socket-handler [ring-request]
   ;; unified API for WebSocket and HTTP long polling/streaming
   (httpkit/with-channel ring-request channel    ; get the channel
@@ -75,22 +90,22 @@
                             (fn [raw] ; two way communication
                               (let [data (edn/read-string raw)
                                     name (:name data)
-                                    msg  (:msg data)]
+                                    msg  (:msg data)
+                                    msg-type (:type data)]
                                 (info "WebSocket: " data)
-                                (case msg
-                                  "start polling" (do
-                                                    (swap! agora-channels assoc channel true)
-                                                    (start-tx-push agora-channels))
-                                  "stop polling" (swap! agora-channels assoc channel false)
+                                (condp = msg-type
+                                  :poll (handle-polling channel msg)
+                                  :update (handle-update data)
                                   nil)
-                                (doseq [c (keys @agora-channels)]
-                                  (when (get @agora-channels c)
-                                    (httpkit/send!
-                                     c (pr-str {:msg msg
-                                                :name name
-                                                :timestamp (.toString (lt/local-now))}
-                                               )
-                                     false))))))
+                                (when (= msg-type :chat)
+                                    (doseq [c (keys @agora-channels)]
+                                      (when (get @agora-channels c)
+                                        (httpkit/send!
+                                         c (pr-str {:msg msg
+                                                    :name name
+                                                    :timestamp (.toString (lt/local-now))}
+                                                   )
+                                         false)))))))
         (httpkit/on-close channel (fn [status]
                                     (swap! agora-channels dissoc channel)
                                     (info "Channel closed: " status))))

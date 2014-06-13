@@ -17,21 +17,28 @@
 (def FILL-GW (- GW 2))
 (def CW (+ (* COLS GW) (* 2 P) 1))
 (def CH (+ (* ROWS GW) (* 2 P) 1))
+
 (def targets (atom {}))
 (def looping-targets (atom nil))
- 
+(def COLOR-INC 5.0)
+
 (def send (chan))
 (def receive (chan))
+(def canvas-chan (chan))
 
 (def ws-url "ws://localhost:3000/agora-socket")
 (def ws (new js/WebSocket ws-url))
 
 (defn event-chan
   [c el type]
-  (let [writer #(put! c el)]
+  (let [writer #(put! c %)]
     (dommy/listen! el type writer)
     {:chan c
      :unsubscribe #(.removeEventListener el type writer)}))
+
+(defn send-on-socket
+  [data]
+  (.send ws (assoc data :name "canvas")))
 
 (defn make-sender []
   (event-chan send (sel1 "input#send-start") :click)
@@ -39,25 +46,41 @@
   (event-chan send (sel1 "input#send-msg") :click)
   (go
    (while true
-     (let [el (<! send)]
-       (.log js/console el)
-       (when-let [msg (case (.-id el)
-                        "send-start" "start polling"
-                        "send-stop" "stop polling"
-                        "send-msg" "a random message"
+     (let [el (.-srcElement (<! send))]
+       (when-let [data (case (.-id el)
+                        "send-start" {:msg "start polling"    :type :poll}
+                        "send-stop"  {:msg "stop polling"     :type :poll}
+                        "send-msg"   {:msg "a random message" :type :chat}
                         nil)]
-         (.send ws {:msg msg :name "canvas"}))))))
+         (send-on-socket data))))))
+
+(defn event-touch-location
+  "Find a location of an event (click in canvas)
+   from: http://answers.oreilly.com/topic/1929-how-to-use-the-canvas-and-draw-elements-in-html5/"
+  [evt]
+  (let [el (.-srcElement evt)
+        x (or (.-pageX evt)
+              (+ (.-clientX evt)
+                 (aget js/document "body" "scrollLeft")
+                 (aget js/document "documentElement" "scrollLeft")))
+        y (or (.-pageY evt)
+              (+ (.-clientY evt)
+                 (aget js/document "body" "scrollTop")
+                 (aget js/document "documentElement" "scrollTop")))] 
+    [(- x (.-offsetLeft el))
+     (- y (.-offsetTop el))]))
+
+(defn xy->col-row
+  [x y]
+  (let [col (quot (max 0 (- x P)) GW)
+        row (quot (max 0 (- y P)) GW)]
+    [col row]))
 
 (defn col-row->xy
   [c r]
   (let [x (+ (inc P) (* c GW))
         y (+ (inc P) (* r GW))]
     [x y]))
-
-(defn agora-mag->rgb
-  [magnitude]
-  (let [g (* 255.0 (/ magnitude 100.0))]
-    [g g g]))
 
 (defn fill-grid-point
   [col row [red green blue]]
@@ -68,12 +91,29 @@
     (set! (.-fillStyle ctx) color)
     (.fillRect ctx x y FILL-GW FILL-GW)))
 
+(defn make-canvas-interaction []
+  (event-chan canvas-chan (sel1 :#grid-canvas) :click)
+  (go
+   (while true
+     (let [evt (<! canvas-chan)
+           [x y] (event-touch-location evt)
+           [col row] (xy->col-row x y)]
+       (fill-grid-point col row [255 55 153])
+       (send-on-socket {:msg  "mark-point"
+                        :x col :y row :magnitude 100.0
+                        :type :update})))))
+
+(defn agora-mag->rgb
+  [magnitude]
+  (let [g (* 255.0 (/ magnitude 100.0))]
+    [g g g]))
+
 (defn update-targets
   []
   (.log js/console "looping targets...")
   (doseq [[col row :as k] (keys @targets)]
     (let [{:keys [current magnitude] :as pt-data} (@targets k)
-          new-g (max magnitude (- current 5.0))
+          new-g (max magnitude (- current COLOR-INC))
           rgb (agora-mag->rgb new-g)]
       (fill-grid-point col row rgb)
       (if (= new-g magnitude)
@@ -86,7 +126,8 @@
 (defn update-canvas
   [{:keys [x y magnitude grid-name]}]
   (.log js/console "x y mag name " x " " y " " magnitude " " grid-name)
-  (swap! targets assoc [x y] {:magnitude magnitude :current 100.0})
+  (swap! targets assoc [x y] {:magnitude magnitude
+                              :current (+ 100.0 (* 2.0 COLOR-INC))})
   (if (nil? @looping-targets)
     (reset! looping-targets (js/setInterval update-targets 1000))))
 
@@ -105,7 +146,7 @@
                            (put! receive msg)))
   (.log js/console "setup message receiver")
   (add-message)
-  (.send ws {:msg "start polling" :name "canvas"}))
+  (.send ws {:msg "start polling" :name "canvas" :type :poll}))
 
 (defn draw-grid
   []
@@ -124,7 +165,8 @@
   (dommy/append! (sel1 :#grid) [:canvas {:width CW
                                          :height CH
                                          :id "grid-canvas"}])
-  (draw-grid))
+  (draw-grid)
+  (make-canvas-interaction))
 
 (def on-load
   (when (sel1 :#live-canvas)
