@@ -52,7 +52,8 @@
               (when ch-on?
                 (httpkit/send! channel
                                (pr-str {:msg pt-data
-                                        :name "datomic"})
+                                        :name "datomic"
+                                        :type :db-txn})
                                false)))))
         (if (should-loop-tx-push channels)
           (do

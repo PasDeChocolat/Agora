@@ -82,14 +82,23 @@
         y (+ (inc P) (* r GW))]
     [x y]))
 
+(defn rgb->css-rgb
+  [r g b]
+  (str "rgb(" (int r) "," (int g) "," (int b) ")"))
+
 (defn fill-grid-point
   [col row [red green blue]]
   (let [canvas (.getElementById js/document CANVAS-ID)
         ctx (.getContext canvas "2d")
-        color (str "rgb(" red "," green "," blue ")")
+        color (rgb->css-rgb red green blue)
         [x y] (col-row->xy col row)]
     (set! (.-fillStyle ctx) color)
+    (.log js/console "filling" col ":" row "=" color)
     (.fillRect ctx x y FILL-GW FILL-GW)))
+
+(defn random-magnitude
+  [min max]
+  (+ min (* (rand) (- max min))))
 
 (defn make-canvas-interaction []
   (event-chan canvas-chan (sel1 :#grid-canvas) :click)
@@ -100,7 +109,8 @@
            [col row] (xy->col-row x y)]
        (fill-grid-point col row [255 55 153])
        (send-on-socket {:msg  "mark-point"
-                        :x col :y row :magnitude 100.0
+                        :x col :y row
+                        :magnitude (random-magnitude 40.0 100.0)
                         :type :update})))))
 
 (defn agora-mag->rgb
@@ -111,6 +121,7 @@
 (defn update-targets
   []
   (.log js/console "looping targets...")
+  (.log js/console (clj->js @targets))
   (doseq [[col row :as k] (keys @targets)]
     (let [{:keys [current magnitude] :as pt-data} (@targets k)
           new-g (max magnitude (- current COLOR-INC))
@@ -127,7 +138,7 @@
   [{:keys [x y magnitude grid-name]}]
   (.log js/console "x y mag name " x " " y " " magnitude " " grid-name)
   (swap! targets assoc [x y] {:magnitude magnitude
-                              :current (+ 100.0 (* 2.0 COLOR-INC))})
+                              :current 100.0})
   (if (nil? @looping-targets)
     (reset! looping-targets (js/setInterval update-targets 1000))))
 
@@ -138,7 +149,7 @@
            raw-data (.-data msg)
            data     (reader/read-string raw-data)]
        (.log js/console "message recieved: " (clj->js data))
-       (if (= "datomic" (:name data))
+       (if (= :db-txn (:type data))
          (update-canvas (:msg data)))))))
 
 (defn make-receiver []
