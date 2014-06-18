@@ -10,7 +10,7 @@
    [agora.db.grid :as grid]
    [agora.db.report :as report]))
 
-(def channels (atom []))
+(defonce channels (atom []))
 
 (defn socket-handler [ring-request]
   ;; unified API for WebSocket and HTTP long polling/streaming
@@ -32,8 +32,8 @@
                               :headers {"Content-Type" "text/plain"}
                               :body    "Long polling?"}))))
 
-(def agora-channels (atom {}))
-(def looping (atom false))
+(defonce agora-channels (atom {}))
+(defonce looping (atom false))
 (defn should-loop-tx-push [channels]
   (some #(not (nil? %)) (vals @channels)))
 
@@ -107,10 +107,8 @@
                                     (doseq [c (keys @agora-channels)]
                                       (when (get @agora-channels c)
                                         (httpkit/send!
-                                         c (pr-str {:msg msg
-                                                    :name name
-                                                    :timestamp (.toString (lt/local-now))}
-                                                   )
+                                         c
+                                         (pr-str (assoc data :timestamp (.toString (lt/local-now))))
                                          false)))))))
         (httpkit/on-close channel (fn [status]
                                     (swap! agora-channels dissoc channel)
