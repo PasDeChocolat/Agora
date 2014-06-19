@@ -73,11 +73,13 @@
 (defn grid-points
   "Points in a grid (or all grids if none given)"
   ([]
-     (aq/find-all-by (d/db conn) :point/xy))
-  ([grid]
+     (grid-points {:grid (ffirst (grid))
+                   :db (d/db conn)}))
+  ([{:keys [db grid] :or {db (d/db conn)
+                          grid (ffirst (grid))}}]
      (d/q '[:find ?point
             :in $ ?grid
             :where
             [?grid :grid/points ?point]]
-          (d/db conn)
+          db
           grid)))

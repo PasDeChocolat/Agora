@@ -80,5 +80,5 @@
          g2 (g-id (create-grid "another-grid"))]
           (mark-point {:x 1 :y 2 :grid g1} 1.0)
           (mark-point {:x 3 :y 4 :grid g2} 2.0)
-          (is (= 2 (+ (count (grid-points g1))
-                      (count (grid-points g2))))))))
+          (is (= 2 (+ (count (grid-points {:grid g1}))
+                      (count (grid-points {:grid g2}))))))))

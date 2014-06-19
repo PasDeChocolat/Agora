@@ -6,14 +6,35 @@
    [agora.db.frame :as frame]
    [agora.db.point :as point]))
 
-#_(defroutes api-routes
-  (ANY "/" [] (resource)))
-
-(defresource grid-resource []
+(defresource grid-resource
+  []
   :available-media-types ["application/json" "application/edn"]
   :handle-ok (fn [ctx]
                (let [media-type (get-in ctx [:representation :media-type])
                      data (frame/last-frame)]
+                 (case media-type
+                   "application/json" (json/write-str data) 
+                   "application/edn" (pr-str data)
+                   (pr-str data)))))
+
+(defn frame-data
+  [unit n]
+  (cond
+   (re-matches #"(?i)^min" unit)
+   (frame/frame-as-of-minutes-ago n)
+
+   (re-matches #"(?i)^day" unit)
+   (frame/frame-as-of-days-ago n)
+
+   :else nil))
+
+(defresource grid-ago-resource
+  [unit n]
+  :allowed-methods [:get]
+  :available-media-types ["application/json" "application/edn"]
+  :handle-ok (fn [ctx]
+               (let [media-type (get-in ctx [:representation :media-type])
+                     data (frame-data unit (Integer/parseInt n))]
                  (case media-type
                    "application/json" (json/write-str data) 
                    "application/edn" (pr-str data)
@@ -24,7 +45,8 @@
 ;; grid -> all points
 ;; grid(time) -> all points, as of time
 
-(defresource point-resource [x y]
+(defresource point-resource
+  [x y]
   :allowed-methods [:get]
   :available-media-types ["application/json" "application/edn"]
   :handle-ok (fn [ctx]
@@ -44,4 +66,5 @@
                                         (format "<html>It's %d milliseconds since the beginning of the epoch."
                                                 (System/currentTimeMillis)))))
   (ANY "/api/point/:x/:y" [x y] (point-resource x y))
+  (GET "/api/grid/ago/:unit/:n" [unit n] (grid-ago-resource unit n))
   (ANY "/api/grid" [] (grid-resource)))
