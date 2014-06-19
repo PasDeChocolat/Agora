@@ -4,10 +4,12 @@
             [compojure.route :as route]
             [taoensso.timbre :as timbre]
             [taoensso.timbre.appenders.rotor :as rotor]
+            [agora.routes.api :refer [api-routes]]
             [agora.routes.home :refer [home-routes]]
             [agora.routes.socket :refer [socket-routes]]
             [agora.middleware :refer [wrap-timbre]]
-            [ring.util.response :refer [file-response]]))
+            [ring.util.response :refer [file-response]]
+            [ring.middleware.params :refer [wrap-params]]))
 
 (defn init
   "init will be called once when
@@ -29,7 +31,10 @@
 
 (def all-routes (routes socket-routes
                         home-routes
+                        api-routes
                         app-routes))
+
 (def app
   (-> (compojure-handler/site #'all-routes)
-      (wrap-timbre {})))
+      (wrap-timbre {})
+      (wrap-params)))

@@ -5,7 +5,8 @@
    [agora.db.report :refer :all :as report]
    [datomic.api :as d]
    [clojure.core.async :refer [>!! <! <!! chan close! go thread] :as async]
-   [agora.db.grid :refer [conn mark-point] :as grid]))
+   [agora.db.conn :refer [conn]]
+   [agora.db.grid :refer [mark-point] :as grid]))
 
 (use-fixtures :each clean-db)
 

@@ -2,7 +2,9 @@
   (:require
    [clojure.test :refer :all]
    [agora.db.fixtures :refer [clean-db]]
+   [agora.db.conn :refer [conn]]
    [agora.db.grid :refer :all :as grid]
+   [agora.db.point :as point]
    [agora.db.query :as query]
    [agora.db.result :as ar]
    [datomic.api :as d]))
@@ -37,7 +39,7 @@
   (testing "point belongs to a grid"
     (let [loc {:x 11 :y 22}
           _ (mark-point loc 3.3)
-          pt-id (point-at loc)
+          pt-id (point/point-at loc)
           grid-id (grid-with pt-id)]          
       (is (= grid/DEFAULT-GRID-NAME
              (ar/maybe (d/db conn) grid-id :grid/name))))))
@@ -59,7 +61,7 @@
           (is (= 1 (count
                     (ar/find-all-by (d/db conn)
                                     :point/xy
-                                    (point-key loc))))))))
+                                    (point/point-key loc))))))))
 
 ;; Retrieve all the points in a grid
 (deftest retrieving-all-points-in-a-grid-test

@@ -4,4 +4,4 @@
 
 (defroutes home-routes
   (GET "/" []
-       (file-response "index.html" {:root "resources/public"})))
+       (file-response "canvas.html" {:root "resources/public"})))

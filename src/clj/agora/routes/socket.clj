@@ -7,6 +7,7 @@
    [taoensso.timbre :as timbre
     :refer (trace debug info warn error fatal spy with-log-level)]
    [clojure.core.async :refer [<! go thread] :as async]
+   [agora.db.conn :as conn]
    [agora.db.grid :as grid]
    [agora.db.report :as report]))
 
@@ -54,7 +55,7 @@
   [channels]
   (when (not @looping)
     (reset! looping true)
-    (report/subscribe grid/conn)
+    (report/subscribe conn/conn)
     (future
       (loop []
         (info "Looping with " (count (keys @channels)) " channels...")
@@ -66,7 +67,7 @@
             (recur))
           (do
             (info "will not recur.")
-            (report/unsubscribe grid/conn)
+            (report/unsubscribe conn/conn)
             (reset! looping false)))))))
 
 (defn handle-polling

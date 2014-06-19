@@ -13,6 +13,8 @@
                  [com.taoensso/timbre "3.2.1"]
                  [http-kit "2.1.18"]
                  [clj-time "0.7.0"]
+                 [liberator "0.11.0"]
+                 [org.clojure/data.json "0.2.5"]
                  [com.datomic/datomic-free "0.9.4815"]
                  [com.cemerick/piggieback "0.0.5"]]
   :plugins [[lein-cljsbuild "1.0.3"]

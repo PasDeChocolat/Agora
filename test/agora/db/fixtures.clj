@@ -1,6 +1,6 @@
 (ns agora.db.fixtures
   (:require
-   [agora.db.grid :refer [conn]]
+   [agora.db.conn :refer [conn]]
    [datomic.api :as d]))
 
 (defn create-empty-in-memory-db
