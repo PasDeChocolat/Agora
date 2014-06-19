@@ -3,16 +3,17 @@
    [compojure.core :refer [ANY GET defroutes]]
    [liberator.core :refer [resource defresource]]
    [clojure.data.json :as json]
+   [agora.db.frame :as frame]
    [agora.db.point :as point]))
 
 #_(defroutes api-routes
   (ANY "/" [] (resource)))
 
-(defresource grid [x y mag]
+(defresource grid-resource []
   :available-media-types ["application/json" "application/edn"]
   :handle-ok (fn [ctx]
                (let [media-type (get-in ctx [:representation :media-type])
-                     data {:x x :y y :magnitude mag}]
+                     data (frame/last-frame)]
                  (case media-type
                    "application/json" (json/write-str data) 
                    "application/edn" (pr-str data)
@@ -23,7 +24,7 @@
 ;; grid -> all points
 ;; grid(time) -> all points, as of time
 
-(defresource point [x y]
+(defresource point-resource [x y]
   :allowed-methods [:get]
   :available-media-types ["application/json" "application/edn"]
   :handle-ok (fn [ctx]
@@ -42,5 +43,5 @@
                            :handle-ok (fn [ctx]
                                         (format "<html>It's %d milliseconds since the beginning of the epoch."
                                                 (System/currentTimeMillis)))))
-  (ANY "/api/point/:x/:y" [x y] (point x y))
-  (ANY "/api/grid/:x/:y/:mag" [x y mag] (grid x y mag)))
+  (ANY "/api/point/:x/:y" [x y] (point-resource x y))
+  (ANY "/api/grid" [] (grid-resource)))

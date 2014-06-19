@@ -22,4 +22,6 @@
 
 (defn real
   [lazy-entity]
-  (d/touch (d/entity (d/db conn) lazy-entity)))
+  (let [id (or (:db/id lazy-entity)
+               lazy-entity)]
+    (d/touch (d/entity (d/db conn) id))))
